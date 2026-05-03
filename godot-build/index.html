@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TRIO Market City Godot World</title>
+    <style>
+      html,
+      body,
+      iframe {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #050816;
+      }
+
+      .debug-input {
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        z-index: 20;
+        padding: 0.6rem 0.75rem;
+        border-radius: 12px;
+        background: rgba(5, 10, 20, 0.82);
+        border: 1px solid rgba(120, 180, 255, 0.26);
+        color: #dff3ff;
+        font: 12px/1.4 monospace;
+        pointer-events: none;
+        white-space: pre-line;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe
+      id="inner-godot-frame"
+      src="../godot/build/web/index.html?v=20260502-1815"
+      title="TRIO Market City Web Export"
+    ></iframe>
+    <div id="debug-input" class="debug-input"></div>
+    <script>
+      const innerFrame = document.getElementById("inner-godot-frame");
+      const debugInput = document.getElementById("debug-input");
+      window.trioWaypoint = "client_district";
+      window.trioCameraSignal = "";
+      window.trioDistrictHighlight = "";
+      window.trioInputState = {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        interact: false,
+        cameraLeft: false,
+        cameraRight: false
+      };
+      window.trioInputSnapshot = "0000000";
+
+      function focusGodotCanvas() {
+        try {
+          innerFrame.contentWindow?.focus();
+          const canvas = innerFrame.contentDocument?.querySelector("canvas");
+          canvas?.focus();
+          canvas?.click();
+        } catch (_error) {}
+      }
+
+      function syncInputState() {
+        try {
+          if (innerFrame.contentWindow) {
+            innerFrame.contentWindow.trioInputState = { ...window.trioInputState };
+            innerFrame.contentWindow.trioInputSnapshot = window.trioInputSnapshot;
+          }
+        } catch (_error) {}
+      }
+
+      function updateInputSnapshot() {
+        window.trioInputSnapshot = [
+          window.trioInputState.up ? "1" : "0",
+          window.trioInputState.down ? "1" : "0",
+          window.trioInputState.left ? "1" : "0",
+          window.trioInputState.right ? "1" : "0",
+          window.trioInputState.interact ? "1" : "0",
+          window.trioInputState.cameraLeft ? "1" : "0",
+          window.trioInputState.cameraRight ? "1" : "0"
+        ].join("");
+        try {
+          innerFrame.contentWindow?.trioGodotInputCallback?.(window.trioInputSnapshot);
+        } catch (_error) {}
+      }
+
+      function renderInputDebug() {
+        debugInput.textContent = [
+          "Input Debug",
+          `up:${window.trioInputState.up ? 1 : 0} down:${window.trioInputState.down ? 1 : 0}`,
+          `left:${window.trioInputState.left ? 1 : 0} right:${window.trioInputState.right ? 1 : 0}`,
+          `E:${window.trioInputState.interact ? 1 : 0} Q:${window.trioInputState.cameraLeft ? 1 : 0} R:${window.trioInputState.cameraRight ? 1 : 0}`
+        ].join("\n");
+      }
+
+      function setInputFlag(key, pressed) {
+        const map = {
+          ArrowUp: "up",
+          ArrowDown: "down",
+          ArrowLeft: "left",
+          ArrowRight: "right",
+          w: "up",
+          W: "up",
+          s: "down",
+          S: "down",
+          a: "left",
+          A: "left",
+          d: "right",
+          D: "right",
+          e: "interact",
+          E: "interact",
+          q: "cameraLeft",
+          Q: "cameraLeft",
+          r: "cameraRight",
+          R: "cameraRight"
+        };
+        const flag = map[key];
+        if (!flag) return false;
+        window.trioInputState[flag] = pressed;
+        updateInputSnapshot();
+        syncInputState();
+        renderInputDebug();
+        return true;
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.source === innerFrame.contentWindow && event.data?.type) {
+          window.parent?.postMessage(event.data, "*");
+          return;
+        }
+
+        if (event.data?.type === "SET_WAYPOINT") {
+          window.trioWaypoint = event.data.districtId || "";
+          try {
+            innerFrame.contentWindow?.postMessage(event.data, "*");
+          } catch (_error) {}
+        }
+
+        if (event.data?.type === "TRIO_CAMERA_SIGNAL") {
+          window.trioCameraSignal = `${event.data.signal || ""}:${Date.now()}`;
+        }
+
+        if (event.data?.type === "TRIO_HIGHLIGHT_DISTRICT") {
+          window.trioDistrictHighlight = `${event.data.districtId || ""}:${Date.now()}`;
+        }
+
+        if (event.data?.type === "TRIO_REQUEST_FOCUS") {
+          focusGodotCanvas();
+        }
+
+        if (event.data?.type === "TRIO_KEY_STATE") {
+          if (setInputFlag(event.data.key, Boolean(event.data.pressed))) {
+            focusGodotCanvas();
+          }
+        }
+      });
+
+      innerFrame.addEventListener("load", () => {
+        focusGodotCanvas();
+        syncInputState();
+        renderInputDebug();
+        window.parent?.postMessage({ type: "GODOT_WRAPPER_READY" }, "*");
+      });
+
+      window.addEventListener("pointerdown", focusGodotCanvas);
+      window.addEventListener("keydown", () => {
+        focusGodotCanvas();
+      });
+      window.addEventListener("keydown", (event) => {
+        if (setInputFlag(event.key, true)) {
+          event.preventDefault();
+          focusGodotCanvas();
+        }
+      });
+      window.addEventListener("keyup", (event) => {
+        if (setInputFlag(event.key, false)) {
+          event.preventDefault();
+        }
+      });
+
+      renderInputDebug();
+      window.setInterval(syncInputState, 120);
+    </script>
+  </body>
+</html>

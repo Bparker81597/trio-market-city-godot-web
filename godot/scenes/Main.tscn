@@ -1,0 +1,73 @@
+[gd_scene load_steps=7 format=3 uid="uid://trio_market_city_main"]
+
+[ext_resource type="Script" path="res://scripts/Main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/CityBuilder.gd" id="2_city"]
+[ext_resource type="Script" path="res://scripts/PlayerController.gd" id="3_player"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
+radius = 0.45
+height = 1.1
+
+[sub_resource type="BoxMesh" id="BoxMesh_prompt"]
+size = Vector3(320, 74, 2)
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="World" type="Node3D" parent="."]
+script = ExtResource("2_city")
+
+[node name="CityGround" type="Node3D" parent="World"]
+
+[node name="Districts" type="Node3D" parent="World"]
+
+[node name="Buildings" type="Node3D" parent="World"]
+
+[node name="NPCs" type="Node3D" parent="World"]
+
+[node name="InteractionZones" type="Node3D" parent="World"]
+
+[node name="Props" type="Node3D" parent="World"]
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.6, 14)
+script = ExtResource("3_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape3D_player")
+
+[node name="CameraPivot" type="Node3D" parent="Player"]
+rotation_degrees = Vector3(-38, 45, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot"]
+position = Vector3(0, 0, 16)
+current = true
+
+[node name="Lighting" type="Node3D" parent="."]
+
+[node name="Sun" type="DirectionalLight3D" parent="Lighting"]
+rotation_degrees = Vector3(-42, 24, 0)
+light_energy = 0.95
+light_color = Color(1, 0.956863, 0.87451, 1)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Lighting"]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="InteractionPrompt" type="PanelContainer" parent="UI"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 384.0
+offset_bottom = 108.0
+visible = false
+
+[node name="Label" type="Label" parent="UI/InteractionPrompt"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 16.0
+offset_right = -18.0
+offset_bottom = -16.0
+text = "Press E to interact"

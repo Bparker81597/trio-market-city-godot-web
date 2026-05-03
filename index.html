@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TRIO Market City: AI Workforce World</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css?v=20260502-1815" />
+  </head>
+  <body>
+    <div class="ambient-bg" aria-hidden="true">
+      <div class="grid"></div>
+      <div class="glow glow-a"></div>
+      <div class="glow glow-b"></div>
+    </div>
+
+    <div id="title-screen" class="title-screen">
+      <div class="title-screen__backdrop" aria-hidden="true"></div>
+      <div class="title-screen__copy">
+        <p class="eyebrow">TRIO Market City</p>
+        <h1>TRIO Market City<br />AI Workforce World</h1>
+        <p class="title-screen__subtitle">Explore the city. Claim opportunities. Build skills. Create impact.</p>
+        <p class="muted-copy">
+          A workforce simulation where students explore a living city, claim opportunities, build AI skills, and turn learning into community impact.
+        </p>
+        <div class="title-screen__actions">
+          <button id="start-game-button" class="start-game-button">Start Game</button>
+          <button id="title-demo-mode-button" class="title-screen__secondary">Demo Mode</button>
+          <button id="how-it-works-button" class="title-screen__secondary">How It Works</button>
+        </div>
+        <p class="title-banner">
+          Designed for TRIO, workforce readiness, AI literacy, entrepreneurship, and career exploration.
+        </p>
+      </div>
+    </div>
+
+    <div id="how-it-works-modal" class="title-modal is-hidden">
+      <div class="title-modal__card glass">
+        <div class="title-modal__header">
+          <div>
+            <p class="eyebrow">How It Works</p>
+            <h2>Explore. Claim. Build. Pitch. Grow.</h2>
+          </div>
+          <button id="close-how-it-works" class="icon-button">×</button>
+        </div>
+        <div class="title-modal__body">
+          <p>Walk through AI Workforce World and enter themed districts that trigger real-world workforce tasks.</p>
+          <ul class="title-modal__list">
+            <li>Client District unlocks community opportunities and paid contracts.</li>
+            <li>Training Center upgrades prompting, research, and strategy skills.</li>
+            <li>Tool Market improves your delivery stack and creative assets.</li>
+            <li>City Hall and Demo Arena connect money, impact, public fund, and reputation.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="cinematic-intro" class="cinematic-intro is-hidden">
+      <button id="skip-intro-button" class="cinematic-intro__skip">Skip</button>
+      <div class="cinematic-intro__copy">
+        <p class="cinematic-line">Welcome to AI Workforce City</p>
+        <p class="cinematic-line">Every district teaches a real-world skill</p>
+        <p class="cinematic-line">Explore. Build. Pitch. Grow.</p>
+      </div>
+    </div>
+
+    <main id="app-shell" class="app-shell is-hidden">
+      <section class="game-stage">
+        <iframe
+          id="godot-frame"
+          class="godot-frame"
+          src="./godot-build/index.html?v=20260502-1815"
+          title="TRIO Market City Godot World"
+          tabindex="0"
+        ></iframe>
+        <div id="frame-fallback" class="frame-fallback is-hidden">
+          3D city loading… make sure the Godot Web export exists.
+        </div>
+        <div id="screen-pulse" class="screen-pulse is-hidden" aria-hidden="true"></div>
+        <div id="confetti-layer" class="confetti-layer" aria-hidden="true"></div>
+        <div id="reward-popups" class="reward-popups" aria-live="polite"></div>
+        <div id="discovery-banner" class="discovery-banner glass is-hidden" aria-live="polite">
+          <p class="eyebrow">District Discovered</p>
+          <h2 id="discovery-title">Client District</h2>
+          <p id="discovery-body">Complete mini-games here to improve your skills.</p>
+        </div>
+
+        <header class="top-hud glass">
+          <div class="brand-block">
+            <p class="eyebrow">TRIO Market City</p>
+            <h1>AI Workforce World</h1>
+            <p class="tagline">Explore the city. Claim opportunities. Build skills. Create impact.</p>
+          </div>
+          <div class="stats-row">
+            <span>Money <strong id="money-value">$500</strong></span>
+            <span>XP <strong id="xp-value">0</strong></span>
+            <span>Level <strong id="level-value">1</strong></span>
+            <span>Reputation <strong id="reputation-value">Emerging Builder</strong></span>
+            <span>Public Fund <strong id="public-fund-value">$0</strong></span>
+            <span>District <strong id="district-value">Home Base</strong></span>
+          </div>
+          <div class="xp-meter" aria-hidden="true">
+            <span id="xp-meter-fill"></span>
+          </div>
+        </header>
+
+        <aside class="left-panel glass">
+          <p class="eyebrow">Mission Control</p>
+          <div id="mission-panel" class="panel-card">
+            <h2 id="mission-title">Welcome to AI Workforce City</h2>
+            <p id="mission-objective">Use <strong>Arrow Keys</strong> or <strong>WASD</strong> to move, then press <strong>E</strong> to open your first opportunity.</p>
+            <div class="mission-meta">
+              <span id="mission-source">Source: Board Coach</span>
+              <span id="mission-reward">Reward: $500 + 25 XP</span>
+              <span id="mission-skill">Skill: Communication + AI Prompting</span>
+            </div>
+            <div class="mission-next-step">
+              <p class="eyebrow">Next Step</p>
+              <p id="mission-next-step">Go to Client District.</p>
+            </div>
+            <div id="mission-actions" class="action-stack">
+              <button id="mission-action-primary" class="primary-button">Start Mission</button>
+            </div>
+          </div>
+
+          <div id="npc-panel" class="panel-card is-hidden">
+            <h3 id="npc-title">Board Coach</h3>
+            <p id="npc-text">Welcome to AI Workforce City.</p>
+          </div>
+
+          <div id="quest-tracker" class="panel-card quest-tracker">
+            <p class="eyebrow">Quest Tracker</p>
+            <h3 id="quest-title">First Contract</h3>
+            <p id="quest-next">Next: Walk to Client District</p>
+            <p id="quest-reward">Reward: $500 + 25 XP</p>
+            <div id="quest-checklist" class="quest-checklist"></div>
+            <div class="quest-guidance">
+              <strong>Recommended Path</strong>
+              <p id="quest-guidance-text">Follow the glowing marker to Client District, then press E to talk to the Youth Program Director.</p>
+            </div>
+          </div>
+        </aside>
+
+        <aside class="right-panel glass">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Live Feed</p>
+              <h2>City Updates</h2>
+            </div>
+          </div>
+          <div id="feed-list" class="feed-list"></div>
+          <div class="panel-card location-panel">
+            <p class="eyebrow">Locations</p>
+            <div id="location-list" class="location-list"></div>
+          </div>
+        </aside>
+
+        <footer class="bottom-dock glass">
+          <button class="dock-button active" data-view="mission">Mission</button>
+          <button class="dock-button" data-view="skills">Skills</button>
+          <button class="dock-button" data-view="inventory">Inventory</button>
+          <button class="dock-button" data-view="home">Home</button>
+          <button id="demo-mode-button" class="dock-button">Demo Mode</button>
+        </footer>
+
+        <section id="drawer-panel" class="drawer-panel glass is-hidden">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow" id="drawer-label">Skills</p>
+              <h2 id="drawer-title">Student Dashboard</h2>
+            </div>
+            <button id="close-drawer-button" class="icon-button">×</button>
+          </div>
+          <div id="drawer-content" class="drawer-content"></div>
+        </section>
+
+        <section id="impact-panel" class="impact-panel glass is-hidden">
+          <p class="eyebrow">Mission Result</p>
+          <h2 id="impact-title">Impact Created</h2>
+          <div id="impact-content" class="impact-content"></div>
+          <div id="impact-learning" class="impact-learning is-hidden"></div>
+          <button id="impact-close-button" class="primary-button">Continue Exploring</button>
+        </section>
+
+        <section id="challenge-panel" class="challenge-panel glass is-hidden">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow" id="challenge-label">Pitch Challenge</p>
+              <h2 id="challenge-title">Mission Challenge</h2>
+            </div>
+            <button id="challenge-close-button" class="icon-button">×</button>
+          </div>
+          <p id="challenge-problem" class="challenge-problem"></p>
+          <div id="challenge-choices" class="challenge-choices"></div>
+        </section>
+
+        <section id="npc-dialog-panel" class="npc-dialog-panel glass is-hidden">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow" id="npc-dialog-role">Client Contact</p>
+              <h2 id="npc-dialog-title">Youth Program Director</h2>
+            </div>
+            <button id="npc-dialog-close-button" class="icon-button">×</button>
+          </div>
+          <p id="npc-dialog-preview" class="challenge-problem"></p>
+          <div id="npc-dialog-actions" class="action-stack"></div>
+        </section>
+
+        <section id="demo-controls" class="demo-controls glass is-hidden">
+          <p class="eyebrow">Demo Mode</p>
+          <div class="demo-controls__actions">
+            <button id="demo-next-button" class="secondary-button">Next Demo Step</button>
+            <button id="demo-stop-button" class="secondary-button">End Demo</button>
+          </div>
+        </section>
+
+        <section class="touch-controls glass is-hidden" aria-label="Movement controls">
+          <p class="eyebrow">Controls</p>
+          <div class="touch-controls__grid">
+            <button class="touch-control touch-control--up" data-input-key="ArrowUp">Up</button>
+            <button class="touch-control touch-control--left" data-input-key="ArrowLeft">Left</button>
+            <button class="touch-control touch-control--down" data-input-key="ArrowDown">Down</button>
+            <button class="touch-control touch-control--right" data-input-key="ArrowRight">Right</button>
+          </div>
+          <div class="touch-controls__actions">
+            <button class="touch-control touch-control--action" data-input-key="e">Interact</button>
+            <button class="touch-control touch-control--action" data-input-key="q">Cam L</button>
+            <button class="touch-control touch-control--action" data-input-key="r">Cam R</button>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js?v=20260502-1815"></script>
+  </body>
+</html>
