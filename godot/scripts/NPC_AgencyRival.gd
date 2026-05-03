@@ -11,7 +11,7 @@ var last_interact_frame := -1
 
 @onready var label: Label3D = $Label3D
 @onready var area: Area3D = $Area3D
-@onready var mesh_root: Node3D = $Meshy_AI_Steampunk_Warrior_Gir_biped_Animation_Running_withSkin
+@onready var mesh_root: Node3D = $MeshyCharacter
 
 
 func _ready() -> void:

@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://npc_agency_rival_scene"]
 
-[ext_resource type="PackedScene" path="res://assets/characters/Meshy_AI_Steampunk_Warrior_Gir_biped/meshy_ai_steampunk_warrior_gir_biped_animation_running_with_skin.tscn" id="1_meshy"]
+[ext_resource type="PackedScene" path="res://scenes/characters/SteampunkWarriorNPC.tscn" id="1_meshy"]
 [ext_resource type="Script" path="res://scripts/NPC_AgencyRival.gd" id="2_script"]
 
 [sub_resource type="CapsuleShape3D" id="1_shape"]
@@ -10,7 +10,7 @@ height = 2.6
 [node name="NPC_AgencyRival" type="Node3D"]
 script = ExtResource("2_script")
 
-[node name="Meshy_AI_Steampunk_Warrior_Gir_biped_Animation_Running_withSkin" parent="." instance=ExtResource("1_meshy")]
+[node name="MeshyCharacter" parent="." instance=ExtResource("1_meshy")]
 transform = Transform3D(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02, 0, 0, 0)
 
 [node name="Area3D" type="Area3D" parent="."]

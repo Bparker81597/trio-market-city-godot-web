@@ -4,7 +4,7 @@ const WebBridgeRef = preload("res://scripts/WebBridge.gd")
 
 @onready var prompt_panel: PanelContainer = $UI/InteractionPrompt
 @onready var prompt_label: Label = $UI/InteractionPrompt/Label
-@onready var player: CharacterBody3D = $Player
+@onready var player: PlayerController = $Player
 @onready var world_environment: WorldEnvironment = $Lighting/WorldEnvironment
 @onready var city_builder: CityBuilder = $World
 

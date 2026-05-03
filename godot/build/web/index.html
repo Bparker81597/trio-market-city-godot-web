@@ -111,7 +111,7 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":25657484,"index.wasm":37695054},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":25657112,"index.wasm":35749181},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 const canvas = document.getElementById('canvas');
@@ -120,31 +120,39 @@ window.trioGodotInputReady = Boolean(window.trioGodotInputReady);
 canvas.setAttribute('tabindex', '0');
 
 function normalizeForwardedKey(key) {
-	const map = {
-		ArrowUp: 0,
-		ArrowDown: 1,
-		ArrowLeft: 2,
-		ArrowRight: 3,
-		w: 0,
-		W: 0,
-		s: 1,
-		S: 1,
-		a: 2,
-		A: 2,
-		d: 3,
-		D: 3,
-		e: 4,
-		E: 4,
-		q: 5,
-		Q: 5,
-		r: 6,
-		R: 6,
-	};
-	return map[key];
+	switch (key) {
+		case 'ArrowUp':
+		case 'w':
+		case 'W':
+			return 0;
+		case 'ArrowDown':
+		case 's':
+		case 'S':
+			return 1;
+		case 'ArrowLeft':
+		case 'a':
+		case 'A':
+			return 2;
+		case 'ArrowRight':
+		case 'd':
+		case 'D':
+			return 3;
+		case 'e':
+		case 'E':
+			return 4;
+		case 'q':
+		case 'Q':
+			return 5;
+		case 'r':
+		case 'R':
+			return 6;
+		default:
+			return -1;
+	}
 }
 
 function setSnapshotIndex(index, pressed) {
-	if (index === undefined) {
+	if (index < 0) {
 		return;
 	}
 	const chars = window.trioInputSnapshot.split('');
@@ -153,28 +161,40 @@ function setSnapshotIndex(index, pressed) {
 	}
 	chars[index] = pressed ? '1' : '0';
 	window.trioInputSnapshot = chars.join('');
-	try {
+	if (window.trioGodotInputReady) {
 		window.trioGodotInputCallback?.(window.trioInputSnapshot);
-	} catch (_error) {}
+	}
 }
 
 window.addEventListener('message', (event) => {
 	if (event.data?.type === 'TRIO_REQUEST_FOCUS') {
 		canvas.focus();
-		return;
 	}
 	if (event.data?.type === 'TRIO_KEY_STATE') {
-		setSnapshotIndex(normalizeForwardedKey(event.data.key), Boolean(event.data.pressed));
-		canvas.focus();
+		const index = normalizeForwardedKey(event.data.key);
+		setSnapshotIndex(index, Boolean(event.data.pressed));
+		if (index >= 0) {
+			canvas.focus();
+		}
 	}
 });
 
 window.addEventListener('keydown', (event) => {
-	setSnapshotIndex(normalizeForwardedKey(event.key), true);
+	const index = normalizeForwardedKey(event.key);
+	if (index >= 0) {
+		setSnapshotIndex(index, true);
+	}
 });
 
 window.addEventListener('keyup', (event) => {
-	setSnapshotIndex(normalizeForwardedKey(event.key), false);
+	const index = normalizeForwardedKey(event.key);
+	if (index >= 0) {
+		setSnapshotIndex(index, false);
+	}
+});
+
+canvas.addEventListener('pointerdown', () => {
+	canvas.focus();
 });
 
 (function () {
@@ -272,8 +292,8 @@ window.addEventListener('keyup', (event) => {
 				}
 			},
 		}).then(() => {
-			canvas.focus();
 			setStatusMode('hidden');
+			canvas.focus();
 		}, displayFailureNotice);
 	}
 }());

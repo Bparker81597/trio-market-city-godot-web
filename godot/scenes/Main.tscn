@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://trio_market_city_main"]
+[gd_scene load_steps=8 format=3 uid="uid://trio_market_city_main"]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/CityBuilder.gd" id="2_city"]
@@ -7,6 +7,9 @@
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.45
 height = 1.1
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_player_interaction"]
+radius = 2.4
 
 [sub_resource type="BoxMesh" id="BoxMesh_prompt"]
 size = Vector3(320, 74, 2)
@@ -36,12 +39,23 @@ script = ExtResource("3_player")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
 shape = SubResource("CapsuleShape3D_player")
 
+[node name="VisualRoot" type="Node3D" parent="Player"]
+position = Vector3(0, 0, 0)
+
 [node name="CameraPivot" type="Node3D" parent="Player"]
 rotation_degrees = Vector3(-38, 45, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Player/CameraPivot"]
 position = Vector3(0, 0, 16)
 current = true
+
+[node name="InteractionArea" type="Area3D" parent="Player"]
+monitoring = true
+monitorable = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/InteractionArea"]
+position = Vector3(0, 1, 0)
+shape = SubResource("SphereShape3D_player_interaction")
 
 [node name="Lighting" type="Node3D" parent="."]
 
