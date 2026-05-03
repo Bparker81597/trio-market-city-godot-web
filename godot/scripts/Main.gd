@@ -17,6 +17,7 @@ var last_player_position := Vector3.ZERO
 
 
 func _ready() -> void:
+	print("MAIN SCENE PATH:", get_tree().current_scene.scene_file_path)
 	_configure_input_map()
 	_style_prompt_panel()
 	_setup_environment()

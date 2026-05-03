@@ -32,9 +32,13 @@ var web_input_callback = null
 
 
 func _ready() -> void:
+	print("PLAYER CONTROLLER READY - ACTIVE PLAYER SCRIPT")
 	visual_root.position = Vector3.ZERO
+	visual_root.scale = Vector3.ONE
+	visual_root.visible = false
 	camera.position.z = clampf(camera.position.z, min_zoom, max_zoom)
 	_install_visual_model()
+	_install_player_visual()
 	_install_web_input_callback()
 	_refresh_interaction_prompt()
 	if interaction_area != null:
@@ -87,6 +91,9 @@ func handle_movement(delta: float) -> void:
 
 		var target_angle := atan2(direction.x, direction.z)
 		visual_root.rotation.y = lerp_angle(visual_root.rotation.y, target_angle, rotation_speed * delta)
+		var player_visual := get_node_or_null("PlayerVisual")
+		if player_visual is Node3D:
+			(player_visual as Node3D).rotation.y = lerp_angle((player_visual as Node3D).rotation.y, target_angle, rotation_speed * delta)
 
 	velocity.x = direction.x * move_speed
 	velocity.z = direction.z * move_speed
@@ -172,6 +179,13 @@ func _install_visual_model() -> void:
 	for child in visual_root.get_children():
 		child.queue_free()
 
+	visual_root.position = Vector3.ZERO
+	visual_root.scale = Vector3.ONE
+	visual_root.visible = false
+
+	var placeholder := _create_player_placeholder()
+	visual_root.add_child(placeholder)
+
 	var character_loaded := false
 	if STEAMPUNK_WARRIOR_SCENE != null:
 		var meshy_instance = STEAMPUNK_WARRIOR_SCENE.instantiate()
@@ -180,15 +194,15 @@ func _install_visual_model() -> void:
 			meshy_character.name = "MeshyCharacter"
 			meshy_character.position = Vector3(0.0, 0.88, 0.0)
 			meshy_character.scale = Vector3.ONE * 0.02
+			meshy_character.visible = true
 			visual_root.add_child(meshy_character)
 			_play_preview_animation(meshy_character)
-			character_loaded = true
+			character_loaded = _node_has_visible_mesh(meshy_character)
 
-	if not character_loaded:
-		_add_placeholder_mesh()
-
-	_add_selection_ring()
-	_add_player_tag()
+	placeholder.visible = not character_loaded
+	var meshy_character_node := visual_root.get_node_or_null("MeshyCharacter")
+	if meshy_character_node is Node3D:
+		(meshy_character_node as Node3D).visible = character_loaded
 
 
 func _play_preview_animation(node: Node) -> void:
@@ -220,55 +234,144 @@ func _find_animation_player(node: Node) -> AnimationPlayer:
 	return null
 
 
-func _add_placeholder_mesh() -> void:
-	var placeholder := MeshInstance3D.new()
-	placeholder.name = "PlaceholderMesh"
-	var capsule := CapsuleMesh.new()
-	capsule.radius = 0.32
-	capsule.height = 1.2
-	placeholder.mesh = capsule
-	placeholder.position = Vector3(0.0, 0.95, 0.0)
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color("36d8ff")
-	material.emission_enabled = true
-	material.emission = Color("7ae6ff")
-	material.emission_energy_multiplier = 1.2
-	placeholder.material_override = material
-	visual_root.add_child(placeholder)
+func _create_player_placeholder() -> Node3D:
+	var placeholder := Node3D.new()
+	placeholder.name = "PlayerPlaceholder"
+	placeholder.position = Vector3.ZERO
+	placeholder.scale = Vector3.ONE
+	placeholder.visible = true
 
+	var body := MeshInstance3D.new()
+	body.name = "Body"
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.34
+	body_mesh.height = 1.18
+	body.mesh = body_mesh
+	body.position = Vector3(0.0, 0.96, 0.0)
+	body.material_override = _bright_material(Color("37d7ff"), Color("8ef4ff"), 1.35)
+	placeholder.add_child(body)
 
-func _add_selection_ring() -> void:
+	var head := MeshInstance3D.new()
+	head.name = "Head"
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.26
+	head.mesh = head_mesh
+	head.position = Vector3(0.0, 1.86, 0.0)
+	head.material_override = _bright_material(Color("ffe69b"), Color("fff2bf"), 1.1)
+	placeholder.add_child(head)
+
+	var backpack := MeshInstance3D.new()
+	backpack.name = "Backpack"
+	var backpack_mesh := BoxMesh.new()
+	backpack_mesh.size = Vector3(0.34, 0.42, 0.18)
+	backpack.mesh = backpack_mesh
+	backpack.position = Vector3(0.0, 1.1, 0.28)
+	backpack.material_override = _bright_material(Color("6f7cff"), Color("9ea7ff"), 1.0)
+	placeholder.add_child(backpack)
+
 	var ring := MeshInstance3D.new()
 	ring.name = "SelectionRing"
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = 0.72
-	mesh.bottom_radius = 0.82
-	mesh.height = 0.06
-	ring.mesh = mesh
-	ring.position = Vector3(0.0, 0.03, 0.0)
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color("4df3ff")
-	material.emission_enabled = true
-	material.emission = Color("6df7ff")
-	material.emission_energy_multiplier = 1.4
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.albedo_color.a = 0.78
-	ring.material_override = material
-	visual_root.add_child(ring)
+	var ring_mesh := CylinderMesh.new()
+	ring_mesh.top_radius = 0.76
+	ring_mesh.bottom_radius = 0.84
+	ring_mesh.height = 0.06
+	ring.mesh = ring_mesh
+	ring.position = Vector3(0.0, 0.04, 0.0)
+	ring.material_override = _bright_material(Color("3ff6ff"), Color("92fbff"), 1.5, true, 0.84)
+	placeholder.add_child(ring)
+
+	return placeholder
 
 
-func _add_player_tag() -> void:
+func _install_player_visual() -> void:
+	var existing_visual := get_node_or_null("PlayerVisual")
+	if existing_visual != null:
+		existing_visual.queue_free()
+	var existing_marker := get_node_or_null("DEBUG_PLAYER_MARKER")
+	if existing_marker != null:
+		existing_marker.queue_free()
+	var existing_label := get_node_or_null("DebugPlayerLabel")
+	if existing_label != null:
+		existing_label.queue_free()
+
+	var player_visual := Node3D.new()
+	player_visual.name = "PlayerVisual"
+	player_visual.position = Vector3.ZERO
+	player_visual.scale = Vector3.ONE
+	player_visual.visible = true
+	add_child(player_visual)
+
+	var body := MeshInstance3D.new()
+	body.name = "Body"
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.36
+	body_mesh.height = 1.24
+	body.mesh = body_mesh
+	body.position = Vector3(0.0, 1.02, 0.0)
+	body.material_override = _bright_material(Color("35d7ff"), Color("8ef1ff"), 1.4)
+	player_visual.add_child(body)
+
+	var head := MeshInstance3D.new()
+	head.name = "Head"
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.28
+	head.mesh = head_mesh
+	head.position = Vector3(0.0, 2.02, 0.0)
+	head.material_override = _bright_material(Color("ffe8a7"), Color("fff3c7"), 1.05)
+	player_visual.add_child(head)
+
+	var backpack := MeshInstance3D.new()
+	backpack.name = "Backpack"
+	var backpack_mesh := BoxMesh.new()
+	backpack_mesh.size = Vector3(0.38, 0.46, 0.2)
+	backpack.mesh = backpack_mesh
+	backpack.position = Vector3(0.0, 1.16, 0.3)
+	backpack.material_override = _bright_material(Color("7283ff"), Color("a9b4ff"), 1.0)
+	player_visual.add_child(backpack)
+
+	var ring := MeshInstance3D.new()
+	ring.name = "SelectionRing"
+	var ring_mesh := CylinderMesh.new()
+	ring_mesh.top_radius = 0.82
+	ring_mesh.bottom_radius = 0.9
+	ring_mesh.height = 0.06
+	ring.mesh = ring_mesh
+	ring.position = Vector3(0.0, 0.05, 0.0)
+	ring.material_override = _bright_material(Color("40f5ff"), Color("96fbff"), 1.55, true, 0.84)
+	player_visual.add_child(ring)
+
 	var label := Label3D.new()
-	label.name = "PlayerTag"
-	label.text = "YOU"
-	label.font_size = 34
-	label.position = Vector3(0.0, 2.8, 0.0)
+	label.name = "PlayerName"
+	label.text = "TRIO Fellow"
+	label.position = Vector3(0.0, 3.0, 0.0)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.font_size = 34
+	label.modulate = Color("f7fcff")
 	label.outline_size = 8
-	label.outline_modulate = Color(0.04, 0.12, 0.2, 0.95)
-	label.modulate = Color("f3fbff")
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	visual_root.add_child(label)
+	label.outline_modulate = Color(0.06, 0.12, 0.2, 0.92)
+	player_visual.add_child(label)
+
+
+func _node_has_visible_mesh(node: Node) -> bool:
+	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+		return true
+	for child in node.get_children():
+		if _node_has_visible_mesh(child):
+			return true
+	return false
+
+
+func _bright_material(albedo: Color, emission: Color, energy: float, transparent: bool = false, alpha: float = 1.0) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = albedo
+	material.albedo_color.a = alpha
+	material.emission_enabled = true
+	material.emission = emission
+	material.emission_energy_multiplier = energy
+	material.roughness = 0.42
+	if transparent:
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	return material
 
 
 func _update_interaction_target() -> void:
