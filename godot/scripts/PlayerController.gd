@@ -44,9 +44,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	idle_time += delta
 	var input_x := Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
-	var input_z := Input.get_action_strength("move_backward") - Input.get_action_strength("move_forward")
-	if InputMap.has_action("move_back"):
-		input_z = max(input_z, Input.get_action_strength("move_back") - Input.get_action_strength("move_forward"))
+	var input_z := Input.get_action_strength("move_back") - Input.get_action_strength("move_forward")
 
 	input_x += virtual_input_vector.x
 	input_z += virtual_input_vector.y

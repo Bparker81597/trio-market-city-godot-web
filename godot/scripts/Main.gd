@@ -131,8 +131,6 @@ func _make_control_button(text: String, pos: Vector2, size_value: Vector2) -> Bu
 func _configure_input_map() -> void:
 	_map_key("move_forward", KEY_W)
 	_map_key("move_forward", KEY_UP)
-	_map_key("move_backward", KEY_S)
-	_map_key("move_backward", KEY_DOWN)
 	_map_key("move_back", KEY_S)
 	_map_key("move_back", KEY_DOWN)
 	_map_key("move_left", KEY_A)
