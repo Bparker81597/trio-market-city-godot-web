@@ -1,10 +1,11 @@
 [gd_scene format=3 uid="uid://cyl3avxcnutra"]
 
-[ext_resource type="PackedScene" path="res://assets/characters/Meshy_AI_Steampunk_Warrior_Gir_biped/Meshy_AI_Steampunk_Warrior_Gir_biped_Animation_Running_withSkin.glb" id="1_tob8y"]
+[ext_resource type="PackedScene" uid="uid://baifu6yopwbwx" path="res://assets/characters/Meshy_AI_Steampunk_Warrior_Gir_biped/Meshy_AI_Steampunk_Warrior_Gir_biped_Animation_Running_withSkin.glb" id="1_tob8y"]
 
 [node name="Meshy_AI_Steampunk_Warrior_Gir_biped_Animation_Running_withSkin" unique_id=248883750 instance=ExtResource("1_tob8y")]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, 0, 0)
 
-[node name="Skeleton3D" parent="Armature" parent_id_path=PackedInt32Array(1730051848) index="0" unique_id=336286259]
+[node name="Skeleton3D" parent="Armature" parent_id_path=PackedInt32Array(545953022) index="0" unique_id=952919806]
 bones/0/position = Vector3(1.4408443, 83.883514, 9.544667)
 bones/0/rotation = Quaternion(0.70808965, -0.2964814, 0.46573073, 0.44023025)
 bones/1/rotation = Quaternion(0.20016786, -0.39228034, -0.5030511, 0.743632)

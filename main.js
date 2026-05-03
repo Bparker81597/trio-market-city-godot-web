@@ -3,6 +3,7 @@ const state = {
   xp: 0,
   level: 1,
   reputation: "Emerging Builder",
+  reputationPoints: 0,
   publicFund: 0,
   currentDistrict: "Home Base",
   currentWaypoint: "client_district",
@@ -1809,14 +1810,15 @@ function playTone(type) {
 
 function syncLevelAndReputation() {
   const previousLevel = state.level;
+  const reputationScore = state.xp + state.reputationPoints;
   state.level = Math.max(1, Math.floor(state.xp / 80) + 1);
   Object.values(state.skills).forEach((skill) => {
     skill.level = Math.max(1, Math.floor(skill.mastery / 25) + 1);
   });
 
-  if (state.xp >= 220) {
+  if (reputationScore >= 220) {
     state.reputation = "Market Strategist";
-  } else if (state.xp >= 120) {
+  } else if (reputationScore >= 120) {
     state.reputation = "Trusted Pitch Builder";
   } else {
     state.reputation = "Emerging Builder";
@@ -2184,6 +2186,50 @@ function hideChallenge() {
   elements.challengeChoices.innerHTML = "";
 }
 
+function startBossChallengeFromEvent(data = {}) {
+  const missionId = "boss_pitch_battle";
+  const mission = missions[missionId];
+  if (!mission) return;
+
+  if (isMissionCompleted(missionId)) {
+    state.nextBestMove = mission.nextBestMove;
+    pushFeed("Boss Challenge", "Demo Arena already cleared. Move on to the next city-backed opportunity.");
+    showImpact(
+      "Boss Challenge Complete",
+      [
+        ["Status", "Demo Arena already won"],
+        ["Next step", mission.nextBestMove]
+      ],
+      "Continue"
+    );
+    renderHud();
+    return;
+  }
+
+  const bossMissionData = {
+    ...data,
+    missionId,
+    npcId: "npc_agency_rival",
+    npcName: data.npc ?? mission.sourceName,
+    sourceId: "npc_agency_rival",
+    sourceType: "npc",
+    sourceName: mission.sourceName,
+    dialogPreview: data.objective ?? mission.challenge?.dialog ?? npcDialogs.npc_agency_rival,
+    title: mission.title,
+    objective: mission.objective,
+    reward: mission.reward,
+    rewardMoney: mission.rewardMoney,
+    rewardXP: mission.rewardXP,
+    rewardReputation: mission.rewardReputation,
+    publicFund: mission.publicFund,
+    skill: mission.skill
+  };
+
+  openMissionPanel(bossMissionData);
+  hideNpcDialog();
+  showMissionChallenge(missionId);
+}
+
 function hideNpcDialog() {
   elements.npcDialogPanel.classList.add("is-hidden");
   elements.npcDialogPanel.classList.remove("is-live");
@@ -2195,7 +2241,7 @@ function showNpcDialog(data) {
   elements.npcDialogTitle.textContent = data.npcName ?? data.sourceName ?? "Mission Contact";
   elements.npcDialogPreview.textContent = data.dialogPreview ?? "This contact has a new opportunity for you.";
   elements.npcDialogActions.innerHTML = `
-    <button id="npc-dialog-accept" class="primary-button">Accept Opportunity</button>
+    <button id="npc-dialog-accept" class="secondary-button">Accept Opportunity</button>
     <button id="npc-dialog-details" class="secondary-button">Ask for Details</button>
     <button id="npc-dialog-leave" class="secondary-button">Leave</button>
   `;
@@ -2520,6 +2566,7 @@ function applyMissionOutcome(missionId, outcome = {}) {
 
   state.money += netReward;
   state.xp += awardedXp;
+  state.reputationPoints += reputationGain;
   state.publicFund += taxAmount + (mission.publicFundBonus ?? 0);
   state.communityImpact += impactGain;
   state.contractsWon += grossReward > 0 ? 1 : 0;
@@ -3060,6 +3107,11 @@ window.addEventListener("message", (event) => {
   if (data.type === "OPEN_MISSION") {
     handleNpcTalk(data);
   }
+});
+
+window.addEventListener("START_BOSS_CHALLENGE", (e) => {
+  console.log("Boss challenge triggered", e.detail);
+  startBossChallengeFromEvent(e.detail ?? {});
 });
 
 markFrameReady();

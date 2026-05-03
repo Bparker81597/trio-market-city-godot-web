@@ -45,6 +45,7 @@ var district_lookup: Dictionary = {}
 var active_waypoint_id := "client_district"
 var guidance_markers: Array[MeshInstance3D] = []
 var ambient_npcs: Array[Node3D] = []
+var arena_pulse_meshes: Array[MeshInstance3D] = []
 
 
 func _ready() -> void:
@@ -66,6 +67,14 @@ func _process(_delta: float) -> void:
 		var npc := ambient_npcs[index]
 		npc.position.y = 0.06 + sin(time * 1.6 + index) * 0.06
 		npc.rotation.y = sin(time * 0.6 + index) * 0.24
+	for arena_mesh in arena_pulse_meshes:
+		if arena_mesh == null:
+			continue
+		var pulse := 1.0 + 0.035 * sin(time * 2.1)
+		arena_mesh.scale = Vector3(pulse, 1.0, pulse)
+		var material := arena_mesh.material_override as StandardMaterial3D
+		if material != null:
+			material.emission_energy_multiplier = 0.42 + (sin(time * 2.4) + 1.0) * 0.18
 
 
 func _build_city_ground() -> void:
@@ -343,6 +352,38 @@ func _build_district_landmark(parent: Node3D, district_id: String, color: Color,
 			crown.position = Vector3(0, 3.0, 0)
 			crown.material_override = _flat_material(color.lightened(0.06))
 			parent.add_child(crown)
+
+			var platform := MeshInstance3D.new()
+			var platform_mesh := CylinderMesh.new()
+			platform_mesh.top_radius = 4.25
+			platform_mesh.bottom_radius = 4.7
+			platform_mesh.height = 0.18
+			platform.mesh = platform_mesh
+			platform.position = Vector3(0, 0.18, 0)
+			platform.material_override = _emissive_material(color.lightened(0.08), 0.42)
+			parent.add_child(platform)
+			arena_pulse_meshes.append(platform)
+
+			var platform_ring := MeshInstance3D.new()
+			var platform_ring_mesh := CylinderMesh.new()
+			platform_ring_mesh.top_radius = 5.1
+			platform_ring_mesh.bottom_radius = 5.45
+			platform_ring_mesh.height = 0.09
+			platform_ring.mesh = platform_ring_mesh
+			platform_ring.position = Vector3(0, 0.11, 0)
+			platform_ring.material_override = _emissive_material(Color("73efff"), 0.58)
+			parent.add_child(platform_ring)
+
+			var boss_label := Label3D.new()
+			boss_label.text = "Boss Challenge"
+			boss_label.font_size = 30
+			boss_label.position = Vector3(0, 6.2, 0)
+			boss_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			boss_label.outline_size = 8
+			boss_label.outline_modulate = Color(0.07, 0.08, 0.14, 0.92)
+			boss_label.modulate = Color("fff1c6")
+			boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			parent.add_child(boss_label)
 		"training_center", "innovation_lab":
 			var tower := MeshInstance3D.new()
 			var tower_mesh := BoxMesh.new()
@@ -753,6 +794,18 @@ func _build_special_npcs() -> void:
 	if rival == null:
 		return
 	rival.position = demo_district[0]["position"] + Vector3(2.0, 0, -1.2)
+
+	var rival_spotlight := SpotLight3D.new()
+	rival_spotlight.name = "BossSpotlight"
+	rival_spotlight.position = Vector3(0.0, 6.8, 0.4)
+	rival_spotlight.rotation_degrees = Vector3(-88.0, 0.0, 0.0)
+	rival_spotlight.light_energy = 4.2
+	rival_spotlight.light_color = Color("ffe8b8")
+	rival_spotlight.spot_range = 15.0
+	rival_spotlight.spot_angle = 34.0
+	rival_spotlight.spot_attenuation = 0.7
+	rival.add_child(rival_spotlight)
+
 	npcs_root.add_child(rival)
 
 

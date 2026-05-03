@@ -31,6 +31,8 @@ func _ready() -> void:
 func _on_body_entered(body: Node) -> void:
 	if body is CharacterBody3D:
 		player_inside = true
+		if zone_id == "demo_arena" and body.has_method("trigger_boss_zone_zoom"):
+			body.trigger_boss_zone_zoom()
 		if not discovered:
 			discovered = true
 			WebBridgeRef.post_event({

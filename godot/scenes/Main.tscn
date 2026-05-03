@@ -1,8 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://trio_market_city_main"]
+[gd_scene format=3 uid="uid://cs1c5dve5xffk"]
 
-[ext_resource type="Script" path="res://scripts/Main.gd" id="1_main"]
-[ext_resource type="Script" path="res://scripts/CityBuilder.gd" id="2_city"]
-[ext_resource type="Script" path="res://scripts/PlayerController.gd" id="3_player"]
+[ext_resource type="Script" uid="uid://dxg6ih778g8tn" path="res://scripts/Main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://byipvnw1x0g0n" path="res://scripts/CityBuilder.gd" id="2_city"]
+[ext_resource type="Script" uid="uid://bl2t0ah14tf44" path="res://scripts/PlayerController.gd" id="3_player"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.45
@@ -11,77 +11,65 @@ height = 1.1
 [sub_resource type="SphereShape3D" id="SphereShape3D_player_interaction"]
 radius = 2.4
 
-[sub_resource type="BoxMesh" id="BoxMesh_prompt"]
-size = Vector3(320, 74, 2)
-
-[node name="Main" type="Node3D"]
+[node name="Main" type="Node3D" unique_id=1533413375]
 script = ExtResource("1_main")
 
-[node name="World" type="Node3D" parent="."]
+[node name="World" type="Node3D" parent="." unique_id=952704635]
 script = ExtResource("2_city")
 
-[node name="CityGround" type="Node3D" parent="World"]
+[node name="CityGround" type="Node3D" parent="World" unique_id=1561684764]
 
-[node name="Districts" type="Node3D" parent="World"]
+[node name="Districts" type="Node3D" parent="World" unique_id=1805398405]
 
-[node name="Buildings" type="Node3D" parent="World"]
+[node name="Buildings" type="Node3D" parent="World" unique_id=1246106250]
 
-[node name="NPCs" type="Node3D" parent="World"]
+[node name="NPCs" type="Node3D" parent="World" unique_id=1268229889]
 
-[node name="InteractionZones" type="Node3D" parent="World"]
+[node name="InteractionZones" type="Node3D" parent="World" unique_id=1870240494]
 
-[node name="Props" type="Node3D" parent="World"]
+[node name="Props" type="Node3D" parent="World" unique_id=1086578044]
 
-[node name="Player" type="CharacterBody3D" parent="."]
+[node name="Player" type="CharacterBody3D" parent="." unique_id=2087820108]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.6, 14)
 script = ExtResource("3_player")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=561822413]
 shape = SubResource("CapsuleShape3D_player")
 
-[node name="VisualRoot" type="Node3D" parent="Player"]
-position = Vector3(0, 0, 0)
+[node name="VisualRoot" type="Node3D" parent="Player" unique_id=844655476]
 
-[node name="CameraPivot" type="Node3D" parent="Player"]
-rotation_degrees = Vector3(-38, 45, 0)
+[node name="CameraPivot" type="Node3D" parent="Player" unique_id=2033869249]
+transform = Transform3D(0.70710677, -0.4353384, 0.55720776, 0, 0.7880108, 0.6156615, -0.70710677, -0.4353384, 0.55720776, 0, 0, 0)
 
-[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot"]
-position = Vector3(0, 0, 16)
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot" unique_id=1896975123]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 16)
 current = true
 
-[node name="InteractionArea" type="Area3D" parent="Player"]
-monitoring = true
-monitorable = true
+[node name="InteractionArea" type="Area3D" parent="Player" unique_id=1733256044]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/InteractionArea"]
-position = Vector3(0, 1, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/InteractionArea" unique_id=11580330]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("SphereShape3D_player_interaction")
 
-[node name="Lighting" type="Node3D" parent="."]
+[node name="Lighting" type="Node3D" parent="." unique_id=1208795823]
 
-[node name="Sun" type="DirectionalLight3D" parent="Lighting"]
-rotation_degrees = Vector3(-42, 24, 0)
-light_energy = 0.95
+[node name="Sun" type="DirectionalLight3D" parent="Lighting" unique_id=1319902669]
+transform = Transform3D(0.9135454, -0.27215993, 0.3022642, 0, 0.7431448, 0.6691306, -0.40673664, -0.6112812, 0.67889655, 0, 0, 0)
 light_color = Color(1, 0.956863, 0.87451, 1)
+light_energy = 0.95
 shadow_enabled = true
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="Lighting"]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Lighting" unique_id=1658887586]
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=550025597]
 
-[node name="InteractionPrompt" type="PanelContainer" parent="UI"]
+[node name="InteractionPrompt" type="PanelContainer" parent="UI" unique_id=57528414]
+visible = false
 offset_left = 24.0
 offset_top = 24.0
 offset_right = 384.0
 offset_bottom = 108.0
-visible = false
 
-[node name="Label" type="Label" parent="UI/InteractionPrompt"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 18.0
-offset_top = 16.0
-offset_right = -18.0
-offset_bottom = -16.0
+[node name="Label" type="Label" parent="UI/InteractionPrompt" unique_id=709786656]
+layout_mode = 2
 text = "Press E to interact"

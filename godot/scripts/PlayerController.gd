@@ -2,8 +2,7 @@ extends CharacterBody3D
 class_name PlayerController
 
 signal prompt_changed(text: String, visible: bool)
-
-const STEAMPUNK_WARRIOR_SCENE = preload("res://scenes/characters/SteampunkWarriorNPC.tscn")
+const STEAMPUNK_WARRIOR_SCENE = preload("res://scenes/SteampunkWarriorNPC.tscn")
 
 @export var move_speed: float = 6.0
 @export var rotation_speed: float = 10.0
@@ -29,6 +28,8 @@ var virtual_camera_left_last := false
 var virtual_camera_right_last := false
 var web_input_snapshot := "0000000"
 var web_input_callback = null
+var special_zoom_target := 0.0
+var special_zoom_timer := 0.0
 
 
 func _ready() -> void:
@@ -127,6 +128,10 @@ func handle_camera(delta: float) -> void:
 	if InputMap.has_action("camera_zoom_out") and Input.is_action_just_pressed("camera_zoom_out"):
 		camera.position.z = minf(camera.position.z + camera_zoom_speed, max_zoom)
 
+	if special_zoom_timer > 0.0:
+		special_zoom_timer = maxf(0.0, special_zoom_timer - delta)
+		camera.position.z = lerpf(camera.position.z, special_zoom_target, 4.6 * delta)
+
 
 func handle_interact() -> void:
 	var interact_pressed := Input.is_action_just_pressed("interact")
@@ -173,6 +178,11 @@ func rotate_camera_left() -> void:
 
 func rotate_camera_right() -> void:
 	camera_pivot.rotate_y(deg_to_rad(-45.0))
+
+
+func trigger_boss_zone_zoom() -> void:
+	special_zoom_target = clampf(10.5, min_zoom, max_zoom)
+	special_zoom_timer = 1.35
 
 
 func _install_visual_model() -> void:

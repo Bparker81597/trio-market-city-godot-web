@@ -96,7 +96,14 @@ func _get_web_input_snapshot() -> String:
 	return "0000000"
 
 
+func _should_show_native_controls() -> bool:
+	return false
+
+
 func _build_native_controls() -> void:
+	if not _should_show_native_controls():
+		return
+
 	var controls_root := Control.new()
 	controls_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	controls_root.mouse_filter = Control.MOUSE_FILTER_IGNORE

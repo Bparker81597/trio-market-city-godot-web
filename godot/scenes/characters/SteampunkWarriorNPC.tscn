@@ -1,5 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="PackedScene" path="res://assets/characters/Meshy_AI_Steampunk_Warrior_Gir_biped/meshy_ai_steampunk_warrior_gir_biped_animation_running_with_skin.tscn" id="1_meshy"]
-
-[node name="SteampunkWarriorNPC" instance=ExtResource("1_meshy")]
