@@ -12,6 +12,8 @@ var active_waypoint := "client_district"
 var last_camera_signal := ""
 var last_district_highlight := ""
 var web_input_snapshot := "0000000"
+var last_web_input_snapshot := "0000000"
+var last_player_position := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -21,6 +23,7 @@ func _ready() -> void:
 	_build_native_controls()
 	player.prompt_changed.connect(_on_prompt_changed)
 	city_builder.set_waypoint_target(active_waypoint)
+	last_player_position = player.global_position
 	# Keep the world playable even if the browser bridge fails.
 
 
@@ -29,8 +32,67 @@ func _on_prompt_changed(text: String, visible: bool) -> void:
 	prompt_label.text = text
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	web_input_snapshot = _get_web_input_snapshot()
+	_apply_web_movement_fallback(delta, web_input_snapshot)
+	_apply_web_action_fallback(web_input_snapshot)
 	city_builder.update_player_guidance(player.global_position)
+	last_web_input_snapshot = web_input_snapshot
+	last_player_position = player.global_position
+
+
+func _apply_web_movement_fallback(delta: float, snapshot: String) -> void:
+	if snapshot.length() < 4:
+		return
+
+	var input_x := 0.0
+	var input_z := 0.0
+	if snapshot[2] == "1":
+		input_x -= 1.0
+	if snapshot[3] == "1":
+		input_x += 1.0
+	if snapshot[0] == "1":
+		input_z -= 1.0
+	if snapshot[1] == "1":
+		input_z += 1.0
+
+	var input_vector := Vector2(input_x, input_z)
+	if input_vector == Vector2.ZERO:
+		return
+	if input_vector.length() > 1.0:
+		input_vector = input_vector.normalized()
+
+	# Only take over if the player controller did not already move this frame.
+	if player.global_position.distance_to(last_player_position) > 0.01:
+		return
+
+	player.global_position += Vector3(input_vector.x, 0.0, input_vector.y) * 5.8 * delta
+
+
+func _apply_web_action_fallback(snapshot: String) -> void:
+	if snapshot.length() < 7:
+		return
+
+	var previous := last_web_input_snapshot
+	while previous.length() < 7:
+		previous += "0"
+
+	if snapshot[4] == "1" and previous[4] != "1":
+		player.trigger_interact()
+	if snapshot[5] == "1" and previous[5] != "1":
+		player.rotate_camera_left()
+	if snapshot[6] == "1" and previous[6] != "1":
+		player.rotate_camera_right()
+
+
+func _get_web_input_snapshot() -> String:
+	if OS.get_name() != "Web":
+		return "0000000"
+
+	var snapshot = JavaScriptBridge.eval("window.trioInputSnapshot || '0000000'", true)
+	if snapshot is String:
+		return snapshot
+	return "0000000"
 
 
 func _build_native_controls() -> void:

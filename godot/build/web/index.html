@@ -111,9 +111,71 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":25653532,"index.wasm":37695054},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":25657484,"index.wasm":37695054},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
+const canvas = document.getElementById('canvas');
+window.trioInputSnapshot = window.trioInputSnapshot || '0000000';
+window.trioGodotInputReady = Boolean(window.trioGodotInputReady);
+canvas.setAttribute('tabindex', '0');
+
+function normalizeForwardedKey(key) {
+	const map = {
+		ArrowUp: 0,
+		ArrowDown: 1,
+		ArrowLeft: 2,
+		ArrowRight: 3,
+		w: 0,
+		W: 0,
+		s: 1,
+		S: 1,
+		a: 2,
+		A: 2,
+		d: 3,
+		D: 3,
+		e: 4,
+		E: 4,
+		q: 5,
+		Q: 5,
+		r: 6,
+		R: 6,
+	};
+	return map[key];
+}
+
+function setSnapshotIndex(index, pressed) {
+	if (index === undefined) {
+		return;
+	}
+	const chars = window.trioInputSnapshot.split('');
+	while (chars.length < 7) {
+		chars.push('0');
+	}
+	chars[index] = pressed ? '1' : '0';
+	window.trioInputSnapshot = chars.join('');
+	try {
+		window.trioGodotInputCallback?.(window.trioInputSnapshot);
+	} catch (_error) {}
+}
+
+window.addEventListener('message', (event) => {
+	if (event.data?.type === 'TRIO_REQUEST_FOCUS') {
+		canvas.focus();
+		return;
+	}
+	if (event.data?.type === 'TRIO_KEY_STATE') {
+		setSnapshotIndex(normalizeForwardedKey(event.data.key), Boolean(event.data.pressed));
+		canvas.focus();
+	}
+});
+
+window.addEventListener('keydown', (event) => {
+	setSnapshotIndex(normalizeForwardedKey(event.key), true);
+});
+
+window.addEventListener('keyup', (event) => {
+	setSnapshotIndex(normalizeForwardedKey(event.key), false);
+});
 
 (function () {
 	const statusOverlay = document.getElementById('status');
@@ -210,6 +272,7 @@ const engine = new Engine(GODOT_CONFIG);
 				}
 			},
 		}).then(() => {
+			canvas.focus();
 			setStatusMode('hidden');
 		}, displayFailureNotice);
 	}
@@ -217,4 +280,3 @@ const engine = new Engine(GODOT_CONFIG);
 		</script>
 	</body>
 </html>
-

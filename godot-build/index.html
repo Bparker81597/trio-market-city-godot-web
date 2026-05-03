@@ -34,8 +34,9 @@
   <body>
     <iframe
       id="inner-godot-frame"
-      src="../godot/build/web/index.html?v=20260502-1815"
+      src="../godot/build/web/index.html?v=20260502-2254"
       title="TRIO Market City Web Export"
+      tabindex="0"
     ></iframe>
     <div id="debug-input" class="debug-input"></div>
     <script>
@@ -54,14 +55,23 @@
         cameraRight: false
       };
       window.trioInputSnapshot = "0000000";
+      window.trioFocusState = {
+        canvasIsActive: false,
+        activeElement: "",
+        documentHasFocus: false,
+        reason: "init"
+      };
 
       function focusGodotCanvas() {
         try {
+          innerFrame.focus();
           innerFrame.contentWindow?.focus();
           const canvas = innerFrame.contentDocument?.querySelector("canvas");
+          canvas?.setAttribute("tabindex", "0");
           canvas?.focus();
           canvas?.click();
         } catch (_error) {}
+        renderInputDebug();
       }
 
       function syncInputState() {
@@ -89,11 +99,18 @@
       }
 
       function renderInputDebug() {
+        const wrapperActive = document.activeElement === innerFrame ? "iframe" : (document.activeElement?.tagName || "none");
         debugInput.textContent = [
           "Input Debug",
           `up:${window.trioInputState.up ? 1 : 0} down:${window.trioInputState.down ? 1 : 0}`,
           `left:${window.trioInputState.left ? 1 : 0} right:${window.trioInputState.right ? 1 : 0}`,
-          `E:${window.trioInputState.interact ? 1 : 0} Q:${window.trioInputState.cameraLeft ? 1 : 0} R:${window.trioInputState.cameraRight ? 1 : 0}`
+          `E:${window.trioInputState.interact ? 1 : 0} Q:${window.trioInputState.cameraLeft ? 1 : 0} R:${window.trioInputState.cameraRight ? 1 : 0}`,
+          `wrapperFocus:${wrapperActive}`,
+          `pageFocus:${document.hasFocus() ? 1 : 0}`,
+          `canvasFocus:${window.trioFocusState.canvasIsActive ? 1 : 0}`,
+          `innerActive:${window.trioFocusState.activeElement || "none"}`,
+          `innerPageFocus:${window.trioFocusState.documentHasFocus ? 1 : 0}`,
+          `reason:${window.trioFocusState.reason || "update"}`
         ].join("\n");
       }
 
@@ -152,6 +169,16 @@
           focusGodotCanvas();
         }
 
+        if (event.data?.type === "TRIO_FOCUS_STATE") {
+          window.trioFocusState = {
+            canvasIsActive: Boolean(event.data.canvasIsActive),
+            activeElement: event.data.activeElement || "",
+            documentHasFocus: Boolean(event.data.documentHasFocus),
+            reason: event.data.reason || "update"
+          };
+          renderInputDebug();
+        }
+
         if (event.data?.type === "TRIO_KEY_STATE") {
           if (setInputFlag(event.data.key, Boolean(event.data.pressed))) {
             focusGodotCanvas();
@@ -167,6 +194,8 @@
       });
 
       window.addEventListener("pointerdown", focusGodotCanvas);
+      window.addEventListener("focus", renderInputDebug);
+      window.addEventListener("blur", renderInputDebug);
       window.addEventListener("keydown", () => {
         focusGodotCanvas();
       });

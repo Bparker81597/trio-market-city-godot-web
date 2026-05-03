@@ -18,6 +18,8 @@ var current_target: Node = null
 var avatar_root: Node3D
 var selection_ring: MeshInstance3D
 var avatar_name_label: Label3D
+var avatar_beacon: MeshInstance3D
+var avatar_beam: MeshInstance3D
 var idle_time := 0.0
 var interact_zoom_timer := 0.0
 var external_focus_timer := 0.0
@@ -32,19 +34,38 @@ var virtual_camera_right_pressed := false
 var virtual_camera_left_last := false
 var virtual_camera_right_last := false
 var virtual_interact_last := false
+var web_input_snapshot := "0000000"
+var web_input_callback
 
 
 func _ready() -> void:
+	print("PLAYER SCRIPT IS RUNNING")
 	_build_avatar()
 	camera.position = Vector3(0, 0, zoom_distance)
 	ground_anchor_y = global_position.y
+	_install_web_input_callback()
 	_build_debug_label()
 
 
 func _physics_process(delta: float) -> void:
+	print("physics running")
 	idle_time += delta
+	if Input.is_key_pressed(KEY_UP):
+		print("UP WORKS")
+
 	var input_x := Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
 	var input_z := Input.get_action_strength("move_back") - Input.get_action_strength("move_forward")
+	_update_web_input_snapshot()
+
+	if web_input_snapshot.length() >= 4:
+		if web_input_snapshot[2] == "1":
+			input_x -= 1.0
+		if web_input_snapshot[3] == "1":
+			input_x += 1.0
+		if web_input_snapshot[0] == "1":
+			input_z -= 1.0
+		if web_input_snapshot[1] == "1":
+			input_z += 1.0
 
 	input_x += virtual_input_vector.x
 	input_z += virtual_input_vector.y
@@ -97,6 +118,11 @@ func _get_web_input_vector() -> Vector2:
 
 
 func _handle_web_action_inputs() -> void:
+	if web_input_snapshot.length() >= 7:
+		virtual_interact_pressed = web_input_snapshot[4] == "1"
+		virtual_camera_left_pressed = web_input_snapshot[5] == "1"
+		virtual_camera_right_pressed = web_input_snapshot[6] == "1"
+
 	if virtual_interact_pressed and not virtual_interact_last:
 		if current_target != null:
 			interact_zoom_timer = 0.28
@@ -124,6 +150,55 @@ func set_virtual_action(action: String, pressed: bool) -> void:
 			virtual_camera_left_pressed = pressed
 		"camera_right":
 			virtual_camera_right_pressed = pressed
+
+
+func trigger_interact() -> void:
+	if current_target != null:
+		interact_zoom_timer = 0.28
+		current_target.interact()
+	else:
+		shake_timer = 0.28
+		shake_strength = 0.18
+		prompt_changed.emit("No interaction target nearby.", true)
+
+
+func rotate_camera_left() -> void:
+	orbit_yaw -= 90.0
+	external_focus_timer = 0.34
+
+
+func rotate_camera_right() -> void:
+	orbit_yaw += 90.0
+	external_focus_timer = 0.34
+
+
+func _update_web_input_snapshot() -> void:
+	if OS.get_name() != "Web":
+		web_input_snapshot = "0000000"
+		return
+
+	var snapshot = JavaScriptBridge.eval("window.trioInputSnapshot || '0000000'", true)
+	if snapshot is String:
+		web_input_snapshot = snapshot
+	else:
+		web_input_snapshot = "0000000"
+
+
+func _install_web_input_callback() -> void:
+	if OS.get_name() != "Web":
+		return
+
+	web_input_callback = JavaScriptBridge.create_callback(_on_web_input_snapshot)
+	JavaScriptBridge.eval("window.trioGodotInputReady = true;", true)
+	var window = JavaScriptBridge.get_interface("window")
+	window.trioGodotInputCallback = web_input_callback
+	window.trioGodotInputReady = true
+
+
+func _on_web_input_snapshot(args: Array) -> void:
+	if args.is_empty():
+		return
+	web_input_snapshot = str(args[0])
 
 func _update_camera(delta: float) -> void:
 	camera_pivot.rotation_degrees.x = lerp(camera_pivot.rotation_degrees.x, -38.0, 6.0 * delta)
@@ -178,48 +253,72 @@ func _build_avatar() -> void:
 
 	var body := MeshInstance3D.new()
 	var body_mesh := CapsuleMesh.new()
-	body_mesh.radius = 0.38
-	body_mesh.height = 1.1
+	body_mesh.radius = 0.52
+	body_mesh.height = 1.5
 	body.mesh = body_mesh
-	body.position = Vector3(0, 0.95, 0)
-	body.material_override = _solid_material(Color("4b88ff"))
+	body.position = Vector3(0, 1.15, 0)
+	body.material_override = _emissive_material(Color("ff5ca8"), 0.85)
 	avatar_root.add_child(body)
 
 	var head := MeshInstance3D.new()
 	var head_mesh := SphereMesh.new()
-	head_mesh.radius = 0.26
+	head_mesh.radius = 0.34
 	head.mesh = head_mesh
-	head.position = Vector3(0, 1.72, 0)
-	head.material_override = _solid_material(Color("ffd7bf"))
+	head.position = Vector3(0, 2.05, 0)
+	head.material_override = _emissive_material(Color("fff3a8"), 0.55)
 	avatar_root.add_child(head)
 
-	var backpack := MeshInstance3D.new()
-	var backpack_mesh := BoxMesh.new()
-	backpack_mesh.size = Vector3(0.34, 0.48, 0.22)
-	backpack.mesh = backpack_mesh
-	backpack.position = Vector3(0, 1.0, -0.22)
-	backpack.material_override = _solid_material(Color("7c4dff"))
-	avatar_root.add_child(backpack)
+	var beacon := MeshInstance3D.new()
+	var beacon_mesh := CylinderMesh.new()
+	beacon_mesh.top_radius = 0.12
+	beacon_mesh.bottom_radius = 0.22
+	beacon_mesh.height = 1.8
+	beacon.mesh = beacon_mesh
+	beacon.position = Vector3(0, 3.15, 0)
+	beacon.material_override = _emissive_material(Color("00f5ff"), 1.4)
+	avatar_root.add_child(beacon)
+	avatar_beacon = beacon
+
+	var beam := MeshInstance3D.new()
+	var beam_mesh := CylinderMesh.new()
+	beam_mesh.top_radius = 0.18
+	beam_mesh.bottom_radius = 0.18
+	beam_mesh.height = 6.4
+	beam.mesh = beam_mesh
+	beam.position = Vector3(0, 3.4, 0)
+	beam.material_override = _emissive_material(Color("41f0ff"), 1.9)
+	avatar_root.add_child(beam)
+	avatar_beam = beam
+
+	var crown := MeshInstance3D.new()
+	var crown_mesh := ConeMesh.new()
+	crown_mesh.bottom_radius = 0.42
+	crown_mesh.height = 0.95
+	crown.mesh = crown_mesh
+	crown.position = Vector3(0, 6.9, 0)
+	crown.rotation_degrees.x = 180.0
+	crown.material_override = _emissive_material(Color("fff27a"), 1.5)
+	avatar_root.add_child(crown)
 
 	var ring := MeshInstance3D.new()
 	var ring_mesh := CylinderMesh.new()
-	ring_mesh.top_radius = 0.74
-	ring_mesh.bottom_radius = 0.74
-	ring_mesh.height = 0.08
+	ring_mesh.top_radius = 1.55
+	ring_mesh.bottom_radius = 1.55
+	ring_mesh.height = 0.12
 	ring.mesh = ring_mesh
 	ring.position = Vector3(0, 0.05, 0)
-	ring.material_override = _emissive_material(Color("52f2b1"), 1.2)
+	ring.material_override = _emissive_material(Color("00ffd5"), 1.6)
 	avatar_root.add_child(ring)
 	selection_ring = ring
 
 	var name_label := Label3D.new()
-	name_label.text = "TRIO Fellow"
-	name_label.font_size = 28
-	name_label.position = Vector3(0, 2.35, 0)
+	name_label.text = "YOU"
+	name_label.font_size = 52
+	name_label.position = Vector3(0, 7.9, 0)
 	name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	name_label.outline_size = 8
+	name_label.outline_size = 10
 	name_label.outline_modulate = Color(1, 1, 1, 0.95)
-	name_label.modulate = Color("1d4f83")
+	name_label.modulate = Color("0b3562")
 	avatar_root.add_child(name_label)
 	avatar_name_label = name_label
 
@@ -230,14 +329,22 @@ func _update_avatar_fx(_delta: float) -> void:
 	var bounce := sin(idle_time * 2.2) * 0.05
 	avatar_root.position.y = bounce
 	if selection_ring != null:
-		var pulse := 1.0 + (0.04 * (sin(idle_time * 3.0) + 1.0))
+		var pulse := 1.0 + (0.1 * (sin(idle_time * 3.0) + 1.0))
 		selection_ring.scale = Vector3.ONE * pulse
+	if avatar_beacon != null:
+		avatar_beacon.scale.y = 1.0 + (0.18 * (sin(idle_time * 4.0) + 1.0))
+	if avatar_beam != null:
+		avatar_beam.scale = Vector3(
+			1.0 + 0.08 * sin(idle_time * 3.6),
+			1.0,
+			1.0 + 0.08 * sin(idle_time * 3.6)
+		)
 
 
 func _build_debug_label() -> void:
 	debug_label = Label3D.new()
 	debug_label.font_size = 18
-	debug_label.position = Vector3(0, 3.2, 0)
+	debug_label.position = Vector3(0, 5.1, 0)
 	debug_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	debug_label.outline_size = 6
 	debug_label.outline_modulate = Color(1, 1, 1, 0.95)
@@ -254,7 +361,7 @@ func _update_debug_label(input_vector: Vector2) -> void:
 		int(virtual_input_vector.x < 0.0),
 		int(virtual_input_vector.x > 0.0)
 	]
-	debug_label.text = "IN %.2f, %.2f\nPOS %.2f, %.2f\nVEL %.2f, %.2f\n%s" % [input_vector.x, input_vector.y, global_position.x, global_position.z, velocity.x, velocity.z, control_flags]
+	debug_label.text = "IN %.2f, %.2f\nPOS %.2f, %.2f\nVEL %.2f, %.2f\nWEB %s\n%s" % [input_vector.x, input_vector.y, global_position.x, global_position.z, velocity.x, velocity.z, web_input_snapshot, control_flags]
 
 
 func trigger_panel_focus() -> void:
