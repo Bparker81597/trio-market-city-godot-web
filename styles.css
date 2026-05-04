@@ -77,6 +77,11 @@ button {
   pointer-events: none;
 }
 
+.app-shell.is-booting .game-stage > :not(#godot-frame):not(#frame-fallback) {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .game-stage {
   position: relative;
   overflow: hidden;

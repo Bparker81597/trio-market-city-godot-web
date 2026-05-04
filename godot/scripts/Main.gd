@@ -17,7 +17,11 @@ var last_player_position := Vector3.ZERO
 
 
 func _ready() -> void:
-	print("MAIN SCENE PATH:", get_tree().current_scene.scene_file_path)
+	var current_scene := get_tree().current_scene
+	var resolved_scene_path := scene_file_path
+	if current_scene != null and current_scene.scene_file_path != "":
+		resolved_scene_path = current_scene.scene_file_path
+	print("MAIN SCENE PATH:", resolved_scene_path)
 	_configure_input_map()
 	_style_prompt_panel()
 	_setup_environment()
@@ -25,6 +29,8 @@ func _ready() -> void:
 	player.prompt_changed.connect(_on_prompt_changed)
 	city_builder.set_waypoint_target(active_waypoint)
 	last_player_position = player.global_position
+	if OS.has_feature("web"):
+		WebBridgeRef.post_event({"type": "TRIO_SHOW_WORLD_SHELL"})
 	# Keep the world playable even if the browser bridge fails.
 
 

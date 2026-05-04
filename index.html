@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=npc-boss-flow-2" />
+    <link rel="stylesheet" href="./styles.css?v=godot-title-only-1" />
   </head>
   <body>
     <div class="ambient-bg" aria-hidden="true">
@@ -19,7 +19,7 @@
       <div class="glow glow-b"></div>
     </div>
 
-    <div id="title-screen" class="title-screen">
+    <div id="title-screen" class="title-screen is-dismissed">
       <div class="title-screen__backdrop" aria-hidden="true"></div>
       <div class="title-screen__copy">
         <p class="eyebrow">TRIO Market City</p>
@@ -69,12 +69,13 @@
       </div>
     </div>
 
-    <main id="app-shell" class="app-shell is-hidden">
+    <main id="app-shell" class="app-shell is-booting">
       <section class="game-stage">
         <iframe
           id="godot-frame"
           class="godot-frame"
-          src="./godot/build/web/index.html?v=npc-boss-flow-3"
+          data-src="./godot/build/web/index.html?v=godot-title-only-1"
+          data-loaded="false"
           title="TRIO Market City Godot World"
           tabindex="0"
         ></iframe>
@@ -222,6 +223,6 @@
       </section>
     </main>
 
-    <script type="module" src="./main.js?v=npc-boss-flow-5"></script>
+    <script type="module" src="./main.js?v=godot-title-only-1"></script>
   </body>
 </html>

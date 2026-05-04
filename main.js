@@ -1277,6 +1277,8 @@ const elements = {
 let frameReady = false;
 let introTimers = [];
 let pendingDemoAfterIntro = false;
+let pendingCoachIntroAfterWorldStart = false;
+let pendingDemoStartAfterWorldStart = false;
 let audioContext;
 let discoveryTimer;
 let coachIntroTimers = [];
@@ -1284,6 +1286,46 @@ let animatedStats = {
   money: state.money,
   xp: state.xp
 };
+
+function ensureGodotFrameLoaded() {
+  if (!elements.frame || elements.frame.dataset.loaded === "true") {
+    return;
+  }
+
+  frameReady = false;
+  elements.frame.dataset.loaded = "true";
+  elements.frame.src = elements.frame.dataset.src ?? "";
+}
+
+function showTitleScreen() {
+  elements.appShell.classList.remove("is-hidden");
+  elements.appShell.classList.add("is-booting");
+  elements.titleScreen.classList.add("is-dismissed");
+}
+
+function showWorldShell() {
+  elements.appShell.classList.remove("is-hidden", "is-booting");
+  elements.titleScreen.classList.add("is-dismissed");
+}
+
+function requestWorldStart() {
+  let dispatched = false;
+
+  try {
+    const startWorld = elements.frame?.contentWindow?.trioStartWorld;
+    if (typeof startWorld === "function") {
+      startWorld();
+      dispatched = true;
+    }
+  } catch (_error) {}
+
+  try {
+    elements.frame?.contentWindow?.postMessage({ type: "TRIO_START_WORLD" }, "*");
+    dispatched = true;
+  } catch (_error) {}
+
+  return dispatched;
+}
 
 function markFrameReady() {
   frameReady = true;
@@ -1330,6 +1372,9 @@ function forwardVirtualKey(key, pressed) {
 }
 
 elements.frame?.addEventListener("load", () => {
+  if (elements.frame?.dataset.loaded !== "true") {
+    return;
+  }
   markFrameReady();
   focusGodotFrame();
 });
@@ -1339,7 +1384,7 @@ document.querySelector(".game-stage")?.addEventListener("pointerdown", focusGodo
 
 window.setTimeout(() => {
   try {
-    if (elements.frame?.contentWindow && elements.frame.contentDocument?.readyState === "complete") {
+    if (elements.frame?.dataset.loaded === "true" && elements.frame?.contentWindow && elements.frame.contentDocument?.readyState === "complete") {
       markFrameReady();
     }
   } catch (_error) {}
@@ -2310,15 +2355,12 @@ function finishIntro(runDemo = false) {
   clearIntroTimers();
   elements.cinematicIntro.classList.add("is-hidden");
   elements.cinematicLines.forEach((line) => line.classList.remove("is-visible"));
-  elements.appShell.classList.remove("is-hidden");
-  sendWaypoint(state.currentWaypoint);
+  ensureGodotFrameLoaded();
   const shouldRunDemo = runDemo || pendingDemoAfterIntro;
   pendingDemoAfterIntro = false;
-  if (shouldRunDemo) {
-    runDemoMode();
-    return;
-  }
-  runCoachIntroSequence();
+  pendingDemoStartAfterWorldStart = shouldRunDemo;
+  pendingCoachIntroAfterWorldStart = !shouldRunDemo;
+  requestWorldStart();
 }
 
 function startIntro(runDemo = false) {
@@ -3058,6 +3100,37 @@ window.addEventListener("message", (event) => {
     return;
   }
 
+  if (data.type === "TRIO_SHOW_WORLD_SHELL") {
+    showWorldShell();
+    sendWaypoint(state.currentWaypoint);
+    if (pendingDemoStartAfterWorldStart) {
+      pendingDemoStartAfterWorldStart = false;
+      pendingCoachIntroAfterWorldStart = false;
+      runDemoMode();
+      return;
+    }
+    if (pendingCoachIntroAfterWorldStart) {
+      pendingCoachIntroAfterWorldStart = false;
+      runCoachIntroSequence();
+    }
+    return;
+  }
+
+  if (data.type === "TRIO_START_INTRO") {
+    startIntro(false);
+    return;
+  }
+
+  if (data.type === "TRIO_START_DEMO_INTRO") {
+    startIntro(true);
+    return;
+  }
+
+  if (data.type === "GODOT_TITLE_READY") {
+    showTitleScreen();
+    return;
+  }
+
   if (data.type === "DISCOVER_DISTRICT") {
     if (!state.discoveredDistricts.includes(data.districtId)) {
       state.discoveredDistricts.push(data.districtId);
@@ -3114,6 +3187,7 @@ window.addEventListener("START_BOSS_CHALLENGE", (e) => {
   startBossChallengeFromEvent(e.detail ?? {});
 });
 
+ensureGodotFrameLoaded();
 markFrameReady();
 
 renderHud();
